@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.weison.dao.RouteDao">
+
+    <!-- 获取路线条数 -->
+    <select id="getroutecount" resultType="int">
+      select count(*) from tab_route
+      <where>
+          <if test="cid != 0">
+            and cid = #{cid}
+          </if>
+          <if test="rname != ''">
+            and rname like #{rname}
+          </if>
+      </where>
+    </select>
+
+    <!-- 获取路线显示集合 -->
+    <select id="getshowlist" resultType="com.weison.domain.Route">
+        select * from tab_route
+        <where>
+            <if test="cid != 0">
+                and cid = #{cid}
+            </if>
+            <if test="rname != '' and rname != 'null'">
+                and rname like #{rname}
+            </if>
+             limit #{start},#{temp}
+        </where>
+    </select>
+
+    <!-- 查询指定路线 -->
+    <select id="finddetialbyrid" resultType="com.weison.domain.Route">
+        select * from tab_route where rid = #{rid}
+    </select>
+
+    <select id="getmyfavorite" resultType="com.weison.domain.Route">
+        SELECT * FROM tab_route WHERE rid IN (SELECT rid FROM tab_favorite WHERE uid = #{uid}) limit #{start},#{temp}
+    </select>
+
+    <select id="getmyfavoritecount" resultType="int">
+        SELECT count(rid) FROM tab_route WHERE rid IN (SELECT rid FROM tab_favorite WHERE uid = #{uid})
+    </select>
+
+    <select id="gethotroutes" resultType="com.weison.domain.Route">
+        SELECT * FROM tab_route ORDER BY tab_route.count DESC limit 4
+    </select>
+
+    <select id="getnewroutes" resultType="com.weison.domain.Route">
+        SELECT * FROM tab_route ORDER BY rdate DESC LIMIT 4
+    </select>
+
+    <select id="getinternalroutes" resultType="com.weison.domain.Route">
+        SELECT * FROM tab_route WHERE cid = 5 LIMIT 6
+    </select>
+
+    <select id="getinternationroutes" resultType="com.weison.domain.Route">
+        SELECT * FROM tab_route WHERE cid = 6 LIMIT 6
+    </select>
+
+    <select id="gethotshowlist" resultType="com.weison.domain.Route">
+        SELECT * FROM tab_route ORDER BY tab_route.count DESC limit 5
+    </select>
+
+    <update id="setroutecount">
+        update tab_route set count = #{count} where rid = #{rid}
+    </update>
+
+    <select id="getrouteleadboard" resultType="com.weison.domain.Route">
+        SELECT * FROM tab_route where COUNT != 0
+             <if test="rname != ''">
+                  and rname like #{rname}
+             </if>
+              and price between #{minprice} and #{maxprice} ORDER BY tab_route.count DESC LIMIT #{start},#{temp}
+    </select>
+
+    <select id="gethotlistcount" resultType="int">
+        SELECT COUNT(*) FROM tab_route WHERE COUNT != 0
+        <if test="rname != ''">
+            and rname like #{rname}
+        </if>
+        and price between #{minprice} and #{maxprice}
+    </select>
+</mapper>

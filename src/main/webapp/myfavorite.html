@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>黑马旅游网-我的收藏</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="css/common.css">
+        <link rel="stylesheet" href="css/index.css">
+        <link rel="stylesheet" href="css/search.css">
+       <style>
+           .tab-content .row>div {
+            margin-top: 16px;
+           } 
+           .tab-content {
+            margin-bottom: 36px;
+           }
+           .pageNum ul li a {
+               text-decoration: none;
+           }
+           .page_num_inf i{
+               float: left;
+               width: 4px;
+               background-color: #878787;
+               height: 20px;
+               margin-top: 5px;
+               margin-right: 10px;
+           }
+           div.page_num_inf{
+               color: #878787;
+               font-size: 19px;
+               margin-bottom: 20px;
+           }
+           .page_num_inf span{
+               color: #ff4848;
+           }
+       </style>
+       <script src="js/jquery-3.3.1.js"></script>
+       <script src="js/getParameter.js"></script>
+       <script>
+           $(function () {
+               var uid = getParameter("uid");
+               load(uid,1)
+           })
+           // 获取页面数据
+           function load(uid,current) {
+               $.get('Favorite/myfavorite',{'uid':uid,'current':current},
+                   function (data) {
+                       // 设置总页码数
+                       $("#pagecount").html(data.pagecount);
+                       // 设置线路总条目数
+                       $("#totalcount").html(data.totalcount);
+
+                       // 上一页页码设置
+                       var precurrent = current > 1 ? current - 1 : current;
+                       // 设置页码显示
+                       var countstr = '<li onclick="load('+uid+','+1+')"><a href="javascript:void(0);">首页</a></li>' +
+                           '<li class="threeword" onclick="load('+uid+','+precurrent+')"><a href="javascript:void(0);">上一页</a></li>';
+
+                       // 总页码不够5页
+                       if (data.pagecount <= 5) {
+                           countstr = showcount(1,data.pagecount,current,countstr,uid);
+                       }  else {   // 总页码超过5页 , 则默认显示5页 , 当前页码在中间显示
+                           // 当前页码小于3 则默认显示
+                           if (current <= 3){
+                               countstr = showcount(1,5,current,countstr,uid);
+                           } else if ((current + 2) >= data.pagecount && current <= data.pagecount) {  // 当前页码已经到最后末尾 - 2
+                               countstr = showcount(data.pagecount - 4,data.pagecount,current,countstr,uid);
+                           } else {    // 当前页码超过 3 并且不在末尾 (即开始滚动显示)
+                               countstr = showcount(current - 2, current + 2,current,countstr,uid);
+                           }
+                       }
+
+                       // 下一页页码设置
+                       var nexcurrent = current < data.pagecount ? current + 1 : data.pagecount;
+                       countstr += '<li class="threeword" onclick="load('+uid+','+nexcurrent+')"><a href="javascript:void(0);">下一页</a></li>\n' +
+                           '    <li class="threeword" onclick="load('+uid+','+data.pagecount+')"><a href="javascript:void(0);">末页</a></li>';
+
+                       $("#countshow").html(countstr);
+
+
+
+                       // 设置页面显示线路条目
+                       var rlist = data.routeList;
+                       var context = '';
+                       for (var i = 0; i < rlist.length; i++){
+                           context += '<div class="col-md-3">\n' +
+                               '                                    <a href="route_detail.html?rid='+rlist[i].rid+'">\n' +
+                               '                                        <img src="'+rlist[i].rimage+'" alt="">\n' +
+                               '                                        <div class="has_border">\n' +
+                               '                                            <h3>'+rlist[i].rname+'</h3>\n' +
+                               '                                            <div class="price">网付价<em>￥</em><strong>'+rlist[i].price+'</strong><em>起</em></div>\n' +
+                               '                                        </div>\n' +
+                               '                                    </a>\n' +
+                               '                                </div>'
+                       }
+                       $("#favoriteContent").html(context)
+                       // 滚动回页面顶部
+                       $('html,body').animate({ scrollTop: 0 },350);
+                   },'json')
+           }
+
+           // 获取页码显示
+           function showcount(start,end,current,countstr,uid) {
+               for (var i = start; i <= end; i++) {
+                   if (i != current) {
+                       countstr += '<li onclick="load('+uid+','+i+')"><a href="javascript:void(0);">' + i + '</a></li>';
+                   } else {
+                       countstr += '<li class="curPage" onclick="load('+uid+','+i+')"><a href="javascript:void(0);">' + i + '</a></li>';
+                   }
+               }
+               return countstr;
+           }
+       </script>
+    </head>
+    <body>
+    <!--引入头部-->
+    <div id="header"></div>
+         <!-- 排行榜 start-->
+        <section id="content">            
+            <section class="hemai_jx">
+                <div class="jx_top">
+                    <div class="jx_tit">
+                        <img src="images/icon_5.jpg" alt="">
+                        <span>我的收藏</span>
+                    </div>                    
+                </div>
+                <div class="jx_content">
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="home">
+                            <div class="row" id="favoriteContent">
+
+                            </div>
+                        </div>                       
+                    </div>
+                </div>
+                <div class="page_num_inf">
+                    <i></i> 共
+                    <span id="pagecount"></span>页<span id="totalcount"></span>条
+                </div>
+                <div class="pageNum">
+                    <ul id="countshow">
+
+                    </ul>
+                </div>
+            </section>                      
+        </section>
+        <!-- 排行榜 end-->
+    	
+         <!--引入尾部-->
+    	<div id="footer"></div>
+        <!--导入布局js，共享header和footer-->
+        <script type="text/javascript" src="js/include.js"></script>
+    </body>
+</html>

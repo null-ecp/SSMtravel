@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>黑马旅游-搜索</title>
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" href="css/search.css">
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/getParameter.js"></script>
+    <script>
+        $(function () {
+            // jq 获取页面跳转的的参数传递
+            var cid = getParameter("cid");
+            var rname = getParameter("rname");
+
+            // 有搜索内容则修改编码
+            if (rname) {
+                rname = decodeURIComponent(rname);
+            }
+            load(cid,1,rname)
+
+            // 右侧热门路线
+            $.get("route/hotshowlist",{},function (data) {
+                var content = '';
+                for (var i = 0; i < data.length; i++){
+                    content += '<li>\n' +
+                        '                            <div class="left"><img src="'+data[i].rimage+'" alt=""></div>\n' +
+                        '                            <div class="right">\n' +
+                        '                                <p>'+data[i].rname.substring(0,17)+'...</p>\n' +
+                        '                                <p>网付价<span>&yen;<span>'+data[i].price+'</span>起</span>\n' +
+                        '                                </p>\n' +
+                        '                            </div>\n' +
+                        '                        </li>';
+                }
+                $("#hotshowlist").html(content)
+            },"json")
+        })
+
+        
+        
+        
+        function load(cid, current, rname) {
+            // 发送异步请求获取页面数据
+            $.get("route/getshowpage",{"cid":cid,"current":current,"rname":rname},
+                function (data) {
+                    console.log(data.routeList)
+                    // 设置总页码数
+                    $("#pagecount").html(data.pagecount);
+                    // 设置线路总条目数
+                    $("#totalcount").html(data.totalcount);
+
+                    // 上一页页码设置
+                    var precurrent = current > 1 ? current - 1 : current;
+                    // 设置页码显示
+                    var countstr = '<li onclick="load('+cid+','+1+',\''+rname+'\')"><a href="javascript:void(0);">首页</a></li>' +
+                        '<li class="threeword" onclick="load('+cid+','+precurrent+',\''+rname+'\')"><a href="javascript:void(0);">上一页</a></li>';
+
+                    // 总页码不够5页
+                    if (data.pagecount <= 5) {
+                            countstr = showcount(1,data.pagecount,current,countstr,cid,rname);
+                    }  else {   // 总页码超过5页 , 则默认显示5页 , 当前页码在中间显示
+                        // 当前页码小于3 则默认显示
+                        if (current <= 3){
+                            countstr = showcount(1,5,current,countstr,cid,rname);
+                        } else if ((current + 2) >= data.pagecount && current <= data.pagecount) {  // 当前页码已经到最后末尾 - 2
+                            countstr = showcount(data.pagecount - 4,data.pagecount,current,countstr,cid,rname);
+                        } else {    // 当前页码超过 3 并且不在末尾 (即开始滚动显示)
+                            countstr = showcount(current - 2, current + 2,current,countstr,cid,rname);
+                        }
+                    }
+
+                    // 下一页页码设置
+                    var nexcurrent = current < data.pagecount ? current + 1 : data.pagecount;
+                    countstr += '<li class="threeword" onclick="load('+cid+','+nexcurrent+',\''+rname+'\')"><a href="javascript:void(0);">下一页</a></li>\n' +
+                        '    <li class="threeword" onclick="load('+cid+','+data.pagecount+',\''+rname+'\')"><a href="javascript:void(0);">末页</a></li>';
+
+                    $("#countshow").html(countstr);
+
+                    // 设置页面显示线路条目
+                    var rlist = data.routeList;
+                    var contentlist = '';
+                    for (var i = 0; i < rlist.length; i++) {
+                        contentlist += '<li>' +
+                            '<div class="img"><img src="'+rlist[i].rimage+'" width="300" height="170" alt=""></div>\n' +
+                            '        <div class="text1">\n' +
+                            '            <p id="rname">'+rlist[i].rname.substring(rlist[i].rname.indexOf("【"),rlist[i].rname.indexOf("】")+1)+'</p>\n' +
+                            '            <br/>\n' +
+                            '            <p id="rinfo">'+rlist[i].routeIntroduce+'</p>\n' +
+                            '        </div>\n' +
+                            '        <div class="price">\n' +
+                            '            <p class="price_num">\n' +
+                            '                <span>&yen;</span>\n' +
+                            '                <span id="price">'+rlist[i].price+'</span>\n' +
+                            '                <span>起</span>\n' +
+                            '            </p>\n' +
+                            '            <p><a href="route_detail.html?rid='+rlist[i].rid+'">查看详情</a></p>\n' +
+                            '        </div>' +
+                            '</li>';
+                    }
+                    $("#showlist").html(contentlist);
+
+                    // 滚动回页面顶部
+                    $('html,body').animate({ scrollTop: 0 },350);
+                },"json")
+        }
+
+        function showcount(start,end,current,countstr,cid,rname) {
+            for (var i = start; i <= end; i++) {
+                if (i != current) {
+                    countstr += '<li onclick="load('+cid+','+i+',\''+rname+'\')"><a href="javascript:void(0);">' + i + '</a></li>';
+                } else {
+                    countstr += '<li class="curPage" onclick="load('+cid+','+i+',\''+rname+'\')"><a href="javascript:void(0);">' + i + '</a></li>';
+                }
+            }
+            return countstr;
+        }
+
+    </script>
+</head>
+<body>
+<!--引入头部-->
+<div id="header"></div>
+    <div class="page_one">
+        <div class="contant">
+            <div class="crumbs">
+                <img src="images/search.png" alt="">
+                <p>黑马旅行><span>搜索结果</span></p>
+            </div>
+            <div class="xinxi clearfix">
+                <div class="left">
+                    <div class="header">
+                        <span>商品信息</span>
+                        <span class="jg">价格</span>
+                    </div>
+                    <ul id="showlist">
+
+                    </ul>
+                    <div class="page_num_inf">
+                        <i></i> 共
+                        <span id="pagecount"></span>页<span id="totalcount"></span>条
+                    </div>
+                    <div class="pageNum">
+                        <ul id="countshow">
+
+                        </ul>
+                    </div>
+                </div>
+                <div class="right">
+                    <div class="top">
+                        <div class="hot">HOT</div>
+                        <span>热门推荐</span>
+                    </div>
+                    <ul id="hotshowlist"> 
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--引入头部-->
+    <div id="footer"></div>
+    <!--导入布局js，共享header和footer-->
+    <script type="text/javascript" src="js/include.js"></script>
+</body>
+
+</html>
